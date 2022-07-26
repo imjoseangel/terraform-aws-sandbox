@@ -13,7 +13,7 @@ variable "region" {
   default     = "eu-central-1"
 }
 
-variable "vpc_cidr" {
+variable "vpc_cidr_block" {
   type        = string
   description = "VPC CIDR"
   default     = "10.100.10.0/23"
