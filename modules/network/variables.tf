@@ -12,3 +12,9 @@ variable "region" {
   description = "aws region"
   default     = "eu-central-1"
 }
+
+variable "vpc_cidr" {
+  type        = string
+  description = "VPC CIDR"
+  default     = "10.100.10.0/23"
+}

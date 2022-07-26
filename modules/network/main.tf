@@ -1,3 +1,59 @@
+################################################################################
+# Create VPC
+################################################################################
+
+resource "aws_vpc" "main" {
+  cidr_block = var.vpc_cidr_block
+  tags = {
+    "Name" = format("sandbox-%s-vpc", var.env)
+  }
+}
+
+################################################################################
+# Calculate Subnets
+################################################################################
+
+data "aws_availability_zones" "main" {
+  state = "available"
+}
+
+module "subnet_addrs" {
+  source  = "hashicorp/subnets/cidr"
+  version = "1.0.0"
+
+  base_cidr_block = var.vpc_cidr_block
+
+  networks = [
+    {
+      name     = data.aws_availability_zones.main.names[0]
+      new_bits = 9
+    },
+    {
+      name     = data.aws_availability_zones.main.names[1]
+      new_bits = 9
+    }
+  ]
+}
+
+################################################################################
+# Create Subnets
+################################################################################
+resource "aws_subnet" "main" {
+  count                   = length(module.subnet_addrs.networks[*].cidr_block)
+  vpc_id                  = data.aws_vpc.main[0].id
+  cidr_block              = module.subnet_addrs.networks[count.index].cidr_block
+  availability_zone       = data.aws_availability_zones.main.names[count.index]
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = format("%s-%s", var.subnet_nat_name, module.subnet_addrs.networks[count.index].name)
+  }
+}
+
+
+################################################################################
+# Setup Network
+################################################################################
 module "network" {
   source              = "github.com/imjoseangel/terraform-aws-privatenat"
   subnet_nat_name     = format("sandbox-%s-nat", var.env)
